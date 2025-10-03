@@ -1,9 +1,9 @@
 # === Master Run ===
 
-$repoRoot = "C:\User\GITUSER\GIT\Wiki\Wiki-Root"
-$excludeDirs = @("Archive","Templates")
-$logPath = Join-Path $repoRoot "TagUpdate.log"
-$dictPath = Join-Path $repoRoot "TagDictionary.md"
+$repoRoot = "<ex. C:\User\GITUSER\GIT\Wiki\Wiki-Root>"
+$excludeDirs = @("<ex. Archive>","<ex. Templates>")
+$logPath = Join-Path $repoRoot "<ex. SubDir\TagUpdate.log>"
+$dictPath = Join-Path $repoRoot "<ex. SubDir\TagDictionary.md>"
 
 "=== Tag Update Run: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss') ===" | Out-File -FilePath $logPath -Encoding UTF8
 
@@ -13,7 +13,7 @@ $files = Get-ChildItem -Path $repoRoot -Recurse -File -Filter *.md |
 $allTags = @()
 
 foreach ($f in $files) {
-    $result = Get-WikiMetadata -FilePath $f.FullName -RepoRoot $repoRoot -ExcludeDirs $excludeDirs
+    $result = Get-WikiMetadata -FilePath $f.FullName -RepoRoot $repoRoot -TagDictionaryPath $dictPath -ExcludeDirs $excludeDirs
     if ($null -ne $result) {
         $allTags += $result.Tags
         $content = Get-Content -Path $f.FullName -Raw
