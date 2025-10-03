@@ -6,7 +6,7 @@ function Get-WikiMetadata {
         [Parameter(Mandatory=$true)]
         [string]$RepoRoot,   # e.g. "C:\User\GITUSER\GIT\Wiki\Wiki-Root"
 
-        [string]$TagDictionaryLink = "<Insert_Address>",
+        [string]$TagDictionaryPath,
 
         [string[]]$ExcludeDirs = @()   # NEW: directories to skip
 
@@ -70,7 +70,7 @@ function Get-WikiMetadata {
         $footer += "<!-- TAG: $t -->"
     }
     $footer += ""
-    $footer += "[Tag Dictionary]($TagDictionaryLink)"
+    $footer += "[Tag Dictionary]($TagDictionaryPath)"
     $footer += "---"
 
     return @{
