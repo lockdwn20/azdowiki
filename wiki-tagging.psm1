@@ -7,7 +7,7 @@ function Get-WikiMetadata {
         [string]$RepoRoot,
 
         [Parameter(Mandatory=$true)]
-        [string]$TagDictionaryPath,
+        [string]$TagDictionaryLink,
 
         [string[]]$ExcludeDirs = @()
     )
@@ -49,7 +49,7 @@ function Get-WikiMetadata {
     $footer += ""
     foreach ($t in $tags) { $footer += "<!-- TAG: $t -->" }
     $footer += ""
-    $footer += "[Tag Dictionary]($TagDictionaryPath)"
+    $footer += "[Tag Dictionary]($TagDictionaryLink)"
     $footer += "---"
 
     return @{
