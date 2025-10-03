@@ -2,7 +2,13 @@
 
 $repoRoot = "C:\User\GITUSER\GIT\Wiki\Wiki-Root"
 $excludeDirs = @("Archive","Templates")
-$dictLink = "TagDictionary.md"  # Markdown-friendly relative path for wiki link
+
+# Markdown-friendly link for wiki footers
+$dictLink = "/Wiki/Wiki-Root/Tags/Tag_Dictionary.md"
+
+# Filesystem path for writing the dictionary file
+$dictWritePath = "Tags\Tag_Dictionary.md"
+
 $logPath = Join-Path $repoRoot "TagUpdate.log"
 
 "=== Tag Update Run: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss') ===" | Out-File -FilePath $logPath -Encoding UTF8
@@ -43,6 +49,15 @@ foreach ($f in $files) {
     }
 }
 
+# === Write Tag Dictionary ===
+
+$dictTargetPath = Join-Path $repoRoot $dictWritePath
+$dictTargetDir = Split-Path $dictTargetPath -Parent
+
+if (-not (Test-Path $dictTargetDir)) {
+    New-Item -Path $dictTargetDir -ItemType Directory | Out-Null
+}
+
 $uniqueTags = $allTags | Sort-Object -Unique
 @(
     "# Tag Dictionary"
@@ -50,6 +65,6 @@ $uniqueTags = $allTags | Sort-Object -Unique
     "This file lists all unique tags generated from the wiki structure."
     ""
     foreach ($t in $uniqueTags) { "- $t" }
-) | Set-Content -Path (Join-Path $repoRoot $dictLink)
+) | Set-Content -Path $dictTargetPath
 
-"Tag dictionary written to $dictLink" | Out-File -FilePath $logPath -Append
+"Tag dictionary written to $dictWritePath" | Out-File -FilePath $logPath -Append
