@@ -26,8 +26,11 @@ foreach ($f in $files) {
         $content = Get-Content -Path $f.FullName -Raw
 
         $expectedLink = "[Tag Dictionary]($dictLink)"
-        $hasHeader = $content -match "(?s)^---.*?---"
-        $hasFooter = $content -match "<!-- TAG:" -and $content -match [Regex]::Escape($expectedLink)
+        $headerPattern = "(?s)^---.*?---\s*"
+        $footerPattern = "(?s)---\s*\*\*Tags:\*\*.*?\[Tag Dictionary\]\(.*?\)\s*---"
+
+        $hasHeader = $content -match $headerPattern
+        $hasFooter = $content -match $footerPattern
 
         if (-not $hasHeader -or -not $hasFooter) {
             $backup = "$($f.FullName).bak"
@@ -36,9 +39,12 @@ foreach ($f in $files) {
                 "Backup created: $($result.Path)" | Out-File -FilePath $logPath -Append
             }
 
-            $newContent = $content
-            if (-not $hasHeader) { $newContent = $result.YAML + "`r`n" + $newContent }
-            if (-not $hasFooter) { $newContent = $newContent + "`r`n" + $result.Footer }
+            # Remove existing header/footer if present
+            if ($hasHeader) { $content = $content -replace $headerPattern, "" }
+            if ($hasFooter) { $content = $content -replace $footerPattern, "" }
+
+            # Rebuild content with fresh header/footer
+            $newContent = $result.YAML + "`r`n" + $content.TrimEnd() + "`r`n" + $result.Footer
 
             Set-Content -Path $f.FullName -Value $newContent
             "Updated: $($result.Path)" | Out-File -FilePath $logPath -Append
