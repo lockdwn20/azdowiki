@@ -7,6 +7,9 @@ function Get-WikiMetadata {
         [string]$RepoRoot,   # e.g. "C:\User\GITUSER\GIT\Wiki\Wiki-Root"
 
         [string]$TagDictionaryLink = "<Insert_Address>"
+
+        [string[]]$ExcludeDirs = @()   # NEW: directories to skip
+
     )
 
     # Resolve full path
@@ -34,7 +37,9 @@ function Get-WikiMetadata {
 
     # Add root folder explicitly
     $rootTag = Split-Path $RepoRoot -Leaf
-    $tags += $rootTag -split '-'
+    if ($ExcludeDirs -notcontains $rootTag) {
+        $tags += $rootTag -split '-'
+    }
 
     # Cleanup: strip spaces, allow underscores, preserve original casing
     $tags = $tags | ForEach-Object {
