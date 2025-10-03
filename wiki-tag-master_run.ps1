@@ -2,12 +2,11 @@
 
 $repoRoot = "C:\User\GITUSER\GIT\Wiki\Wiki-Root"
 $excludeDirs = @("Archive","Templates")
-$dictPath = "Tag_Dictionary.md"  # Relative path for footer link
-$dictFullPath = Join-Path $repoRoot $dictPath
-$logPath = Join-Path $repoRoot "Tag_Update.log"
+$dictLink = "TagDictionary.md"  # Markdown-friendly relative path for wiki link
+$logPath = Join-Path $repoRoot "TagUpdate.log"
 
 "=== Tag Update Run: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss') ===" | Out-File -FilePath $logPath -Encoding UTF8
-"Using Tag Dictionary: $dictPath" | Out-File -FilePath $logPath -Append
+"Using Tag Dictionary link: $dictLink" | Out-File -FilePath $logPath -Append
 
 $files = Get-ChildItem -Path $repoRoot -Recurse -File -Filter *.md |
     Where-Object { $_.FullName -notmatch "\\($($excludeDirs -join '|'))\\" }
@@ -15,12 +14,12 @@ $files = Get-ChildItem -Path $repoRoot -Recurse -File -Filter *.md |
 $allTags = @()
 
 foreach ($f in $files) {
-    $result = Get-WikiMetadata -FilePath $f.FullName -RepoRoot $repoRoot -TagDictionaryPath $dictPath -ExcludeDirs $excludeDirs
+    $result = Get-WikiMetadata -FilePath $f.FullName -RepoRoot $repoRoot -TagDictionaryLink $dictLink -ExcludeDirs $excludeDirs
     if ($null -ne $result) {
         $allTags += $result.Tags
         $content = Get-Content -Path $f.FullName -Raw
 
-        $expectedLink = "[Tag Dictionary]($dictPath)"
+        $expectedLink = "[Tag Dictionary]($dictLink)"
         $hasHeader = $content -match "(?s)^---.*?---"
         $hasFooter = $content -match "<!-- TAG:" -and $content -match [Regex]::Escape($expectedLink)
 
@@ -51,6 +50,6 @@ $uniqueTags = $allTags | Sort-Object -Unique
     "This file lists all unique tags generated from the wiki structure."
     ""
     foreach ($t in $uniqueTags) { "- $t" }
-) | Set-Content -Path $dictFullPath
+) | Set-Content -Path (Join-Path $repoRoot $dictLink)
 
-"Tag dictionary written to $dictFullPath" | Out-File -FilePath $logPath -Append
+"Tag dictionary written to $dictLink" | Out-File -FilePath $logPath -Append
