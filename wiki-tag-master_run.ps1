@@ -19,7 +19,8 @@ foreach ($f in $files) {
         $content = Get-Content -Path $f.FullName -Raw
 
         $hasHeader = $content -match "(?s)^---.*?---"
-        $hasFooter = $content -match "<!-- TAG:"
+        $expectedLink = "[Tag Dictionary]($dictPath)"
+        $hasFooter = $content -match "<!-- TAG:" -and $content -match [Regex]::Escape($expectedLink)
 
         if (-not $hasHeader -or -not $hasFooter) {
             # Backup
