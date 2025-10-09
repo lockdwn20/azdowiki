@@ -147,13 +147,30 @@ function Backup-WikiFiles {
         [string]$FilePath,
 
         [Parameter(Mandatory=$true)]
-        [string]$LogPath
+        [string]$LogPath,
+
+        [ValidateSet("Create","Delete","None")]
+        [string]$Mode = "Create"
     )
 
     $backup = "$FilePath.bak"
-    if (-not (Test-Path $backup)) {
-        Copy-Item -Path $FilePath -Destination $backup
-        Write-WikiMetadataLog -Message "Backup created: $FilePath" -LogPath $LogPath
+
+    switch ($Mode) {
+        "Create" {
+            if (-not (Test-Path $backup)) {
+                Copy-Item -Path $FilePath -Destination $backup
+                Write-WikiMetadataLog -Message "Backup created: $FilePath" -LogPath $LogPath
+            }
+        }
+        "Delete" {
+            if (Test-Path $backup)) {
+                Remove-Item $backup -Force
+                Write-WikiMetadataLog -Message "Backup deleted: $FilePath" -LogPath $LogPath
+            }
+        }
+        "None" {
+            # Do nothing
+        }
     }
 }
 
