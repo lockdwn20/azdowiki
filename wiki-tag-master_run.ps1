@@ -11,8 +11,8 @@ $dictWritePath = "Tags\Tag_Dictionary.md"
 
 $logPath = Join-Path $repoRoot "TagUpdate.log"
 
-"=== Tag Update Run: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss') ===" | Out-File -FilePath $logPath -Encoding utf8NoBOM
-"Using Tag Dictionary link: $dictLink" | Add-Content -Path $logPath -Encoding utf8NoBOM
+"=== Tag Update Run: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss') ===" | Out-File -FilePath $logPath -Encoding ASCII
+"Using Tag Dictionary link: $dictLink" | Add-Content -Path $logPath -Encoding ASCII
 
 # === Include root-level file named after the repo folder ===
 $rootName = Split-Path $repoRoot -Leaf
@@ -22,7 +22,7 @@ $rootLevelFile = Join-Path $parentDir "$rootName.md"
 $files = @()
 if (Test-Path $rootLevelFile) {
     $files += Get-Item $rootLevelFile
-    "Included root-level file: $rootLevelFile" | Add-Content -Path $logPath -Encoding utf8NoBOM
+    "Included root-level file: $rootLevelFile" | Add-Content -Path $logPath -Encoding ASCII
 }
 
 # === Add all .md files inside repoRoot, excluding specified dirs ===
@@ -60,7 +60,7 @@ foreach ($f in $files) {
             $backup = "$($f.FullName).bak"
             if (-not (Test-Path $backup)) {
                 Copy-Item -Path $f.FullName -Destination $backup
-                "Backup created: $($result.Path)" | Add-Content -Path $logPath -Encoding utf8NoBOM
+                "Backup created: $($result.Path)" | Add-Content -Path $logPath -Encoding ASCII
             }
         
             if ($hasHeader) { $content = $content -replace $headerPattern, "" }
@@ -68,10 +68,10 @@ foreach ($f in $files) {
         
             $newContent = $result.YAML + "`r`n" + $content.TrimEnd() + "`r`n" + $result.Footer
             Set-Content -Path $f.FullName -Value $newContent
-            "Updated (tags changed): $($result.Path)" | Add-Content -Path $logPath -Encoding utf8NoBOM
+            "Updated (tags changed): $($result.Path)" | Add-Content -Path $logPath -Encoding ASCII
         }
         else {
-            "Skipped (tags already correct): $($result.Path)" | Add-Content -Path $logPath -Encoding utf8NoBOM
+            "Skipped (tags already correct): $($result.Path)" | Add-Content -Path $logPath -Encoding ASCII
         }
     }
 }
@@ -94,4 +94,4 @@ $uniqueTags = $allTags | Sort-Object -Unique
     foreach ($t in $uniqueTags) { "- $t" }
 ) | Set-Content -Path $dictTargetPath
 
-"Tag dictionary written to $dictWritePath" | Add-Content -Path $logPath -Encoding utf8NoBOM
+"Tag dictionary written to $dictWritePath" | Add-Content -Path $logPath -Encoding ASCII
