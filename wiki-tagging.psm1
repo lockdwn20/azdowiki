@@ -186,7 +186,10 @@ function Update-WikiFile {
         [string]$LogPath,
 
         [Parameter(Mandatory=$true)]
-        [string]$DictLink
+        [string]$DictLink,
+
+        [ValidateSet("Create","Delete","None")]
+        [string]$BackupMode = "Create"
     )
 
     $content = Get-Content -Path $FilePath -Raw
@@ -201,8 +204,8 @@ function Update-WikiFile {
     $validation = Test-WikiMetadata -Content $content -ExpectedTags $Metadata.Tags
 
     if (-not $hasHeader -or -not $hasFooter -or $validation.TagsDiffer) {
-        # Backup before modifying
-        Backup-WikiFiles -FilePath $FilePath -LogPath $LogPath
+        # Backup before modifying (if mode = Create)
+        Backup-WikiFiles -FilePath $FilePath -LogPath $LogPath -Mode $BackupMode
 
         # Strip old header/footer if present
         if ($hasHeader) { $content = $content -replace $headerPattern, "" }
@@ -216,6 +219,11 @@ function Update-WikiFile {
     }
     else {
         Write-WikiMetadataLog -Message "Skipped (tags already correct): $($Metadata.Path)" -LogPath $LogPath
+    }
+
+    # Optional cleanup: if BackupMode = Delete, remove backup after update
+    if ($BackupMode -eq "Delete") {
+        Backup-WikiFiles -FilePath $FilePath -LogPath $LogPath -Mode Delete
     }
 }
 
