@@ -33,48 +33,46 @@ $allTags = @()
 
 foreach ($f in $files) {
     $result = Get-WikiMetadata -FilePath $f.FullName -RepoRoot $repoRoot -TagDictionaryLink $dictLink -ExcludeDirs $excludeDirs
+    if ($null -ne $result) {
+        $allTags += $result.Tags
+        $content = Get-Content -Path $f.FullName -Raw
 
-    if ($null -eq $result -or $null -eq $result.YAML -or $null -eq $result.Footer) {
-        "Skipped (null metadata): $($f.FullName)" | Out-File -FilePath $logPath -Append
-        continue
-    }
+        $expectedLink = "[Tag Dictionary]($dictLink)"
+        $headerPattern = "(?s)^---.*?---\s*"
+        $footerPattern = "(?s)---\s*\*\*Tags:\*\*.*?\[Tag Dictionary\]\(.*?\)\s*---"
 
-    $content = Get-Content -Path $f.FullName -Raw
-    if ($null -eq $content -or $content.Trim().Length -eq 0) {
-        "Skipped (empty or unreadable content): $($f.FullName)" | Out-File -FilePath $logPath -Append
-        continue
-    }
+        $hasHeader = $content -match $headerPattern
+        $hasFooter = $content -match $footerPattern
 
-    $allTags += $result.Tags
+        if (-not $hasHeader -or -not $hasFooter) {
+            $backup = "$($f.FullName).bak"
+            if (-not (Test-Path $backup)) {
+                Copy-Item -Path $f.FullName -Destination $backup
+                "Backup created: $($result.Path)" | Out-File -FilePath $logPath -Append
+            }
 
-    $expectedLink = "[Tag Dictionary]($dictLink)"
-    $headerPattern = "(?s)^---.*?---\s*"
-    $footerPattern = "(?s)---\s*\*\*Tags:\*\*.*?\[Tag Dictionary\]\(.*?\)\s*---"
+            # Remove existing header/footer if present
+            if ($hasHeader) { $content = $content -replace $headerPattern, "" }
+            if ($hasFooter) { $content = $content -replace $footerPattern, "" }
 
-    $hasHeader = $content -match $headerPattern
-    $hasFooter = $content -match $footerPattern
+            if ($null -eq $result -or $null -eq $result.YAML -or $null -eq $result.Footer) {
+                "Skipped (null metadata): $($f.FullName)" | Out-File -FilePath $logPath -Append
+                continue
+            }
 
-    if (-not $hasHeader -or -not $hasFooter) {
-        $backup = "$($f.FullName).bak"
-        if (-not (Test-Path $backup)) {
-            Copy-Item -Path $f.FullName -Destination $backup
-            "Backup created: $($result.Path)" | Out-File -FilePath $logPath -Append
-        }
-
-        if ($hasHeader) { $content = $content -replace $headerPattern, "" }
-        if ($hasFooter) { $content = $content -replace $footerPattern, "" }
-
-        try {
+            if ($null -eq $content -or $content.Trim().Length -eq 0) {
+                "Skipped (empty or unreadable content): $($f.FullName)" | Out-File -FilePath $logPath -Append
+                continue
+            }
+            # Rebuild content with fresh header/footer
             $newContent = $result.YAML + "`r`n" + $content.TrimEnd() + "`r`n" + $result.Footer
+
             Set-Content -Path $f.FullName -Value $newContent
             "Updated: $($result.Path)" | Out-File -FilePath $logPath -Append
         }
-        catch {
-            "Error writing content for $($f.FullName): $($_.Exception.Message)" | Out-File -FilePath $logPath -Append
+        else {
+            "Skipped (already tagged and linked): $($result.Path)" | Out-File -FilePath $logPath -Append
         }
-    }
-    else {
-        "Skipped (already tagged and linked): $($result.Path)" | Out-File -FilePath $logPath -Append
     }
 }
 
