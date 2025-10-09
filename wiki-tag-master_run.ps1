@@ -14,6 +14,17 @@ $logPath = Join-Path $repoRoot "TagUpdate.log"
 "=== Tag Update Run: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss') ===" | Out-File -FilePath $logPath -Encoding UTF8
 "Using Tag Dictionary link: $dictLink" | Out-File -FilePath $logPath -Append
 
+# === Include root-level file named after the repo folder ===
+$rootName = Split-Path $repoRoot -Leaf
+$parentDir = Split-Path $repoRoot -Parent
+$rootLevelFile = Join-Path $parentDir "$rootName.md"
+
+$files = @()
+if (Test-Path $rootLevelFile) {
+    $files += Get-Item $rootLevelFile
+    "Included root-level file: $rootLevelFile" | Out-File -FilePath $logPath -Append
+}
+
 $files = Get-ChildItem -Path $repoRoot -Recurse -File -Filter *.md |
     Where-Object { $_.FullName -notmatch "\\($($excludeDirs -join '|'))\\" }
 
