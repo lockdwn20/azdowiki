@@ -163,7 +163,7 @@ function Backup-WikiFiles {
             }
         }
         "Delete" {
-            if (Test-Path $backup)) {
+            if (Test-Path $backup) {
                 Remove-Item $backup -Force
                 Write-WikiMetadataLog -Message "Backup deleted: $FilePath" -LogPath $LogPath
             }
