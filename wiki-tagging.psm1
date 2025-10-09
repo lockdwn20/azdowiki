@@ -69,3 +69,172 @@ function Get-WikiMetadata {
         Tags   = $tags
     }
 }
+
+function Write-WikiMetadataLog {
+    param(
+        [Parameter(Mandatory=$true)]
+        [string]$Message,
+
+        [Parameter(Mandatory=$true)]
+        [string]$LogPath,
+
+        [ValidateSet("INFO","WARN","ERROR")]
+        [string]$Level = "INFO"
+    )
+
+    $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
+    "$timestamp [$Level] $Message" | Add-Content -Path $LogPath -Encoding ASCII
+}
+
+function Get-WikiFiles {
+    param(
+        [Parameter(Mandatory=$true)]
+        [string]$RepoRoot,
+
+        [string[]]$ExcludeDirs = @()
+    )
+
+    $files = @()
+
+    # Include root-level file named after the repo folder
+    $rootName = Split-Path $RepoRoot -Leaf
+    $parentDir = Split-Path $RepoRoot -Parent
+    $rootLevelFile = Join-Path $parentDir "$rootName.md"
+
+    if (Test-Path $rootLevelFile) {
+        $files += Get-Item $rootLevelFile
+    }
+
+    # Add all .md files inside RepoRoot, excluding specified dirs
+    $files += Get-ChildItem -Path $RepoRoot -Recurse -File -Filter *.md |
+        Where-Object { $_.FullName -notmatch "\\($($ExcludeDirs -join '|'))\\" }
+
+    return $files
+}
+
+function Test-WikiMetadata {
+    param(
+        [Parameter(Mandatory=$true)]
+        [string]$Content,
+
+        [Parameter(Mandatory=$true)]
+        [string[]]$ExpectedTags
+    )
+
+    $headerPattern = "(?s)^---.*?---\s*"
+    $hasHeader = $Content -match $headerPattern
+
+    $existingTags = @()
+    if ($hasHeader) {
+        if ($Content -match "(?s)^---.*?tags:(.*?)---") {
+            $raw = $matches[1] -split "`r?`n"
+            $existingTags = $raw -replace "^\s*-\s*", "" | Where-Object { $_ -ne "" }
+        }
+    }
+
+    # Compare sorted sets
+    $tagsDiffer = (@($existingTags | Sort-Object) -join ',') -ne (@($ExpectedTags | Sort-Object) -join ',')
+    return @{
+        HasHeader   = $hasHeader
+        Existing    = $existingTags
+        TagsDiffer  = $tagsDiffer
+    }
+}
+
+function Backup-WikiFiles {
+    param(
+        [Parameter(Mandatory=$true)]
+        [string]$FilePath,
+
+        [Parameter(Mandatory=$true)]
+        [string]$LogPath
+    )
+
+    $backup = "$FilePath.bak"
+    if (-not (Test-Path $backup)) {
+        Copy-Item -Path $FilePath -Destination $backup
+        Write-WikiMetadataLog -Message "Backup created: $FilePath" -LogPath $LogPath
+    }
+}
+
+function Update-WikiFile {
+    param(
+        [Parameter(Mandatory=$true)]
+        [string]$FilePath,
+
+        [Parameter(Mandatory=$true)]
+        [hashtable]$Metadata,   # Output from Get-WikiMetadata
+
+        [Parameter(Mandatory=$true)]
+        [string]$LogPath,
+
+        [Parameter(Mandatory=$true)]
+        [string]$DictLink
+    )
+
+    $content = Get-Content -Path $FilePath -Raw
+
+    $headerPattern = "(?s)^---.*?---\s*"
+    $footerPattern = "(?s)---\s*\*\*Tags:\*\*.*?\[Tag Dictionary\]\(.*?\)\s*---"
+
+    $hasHeader = $content -match $headerPattern
+    $hasFooter = $content -match $footerPattern
+
+    # Validate tags
+    $validation = Test-WikiMetadata -Content $content -ExpectedTags $Metadata.Tags
+
+    if (-not $hasHeader -or -not $hasFooter -or $validation.TagsDiffer) {
+        # Backup before modifying
+        Backup-WikiFiles -FilePath $FilePath -LogPath $LogPath
+
+        # Strip old header/footer if present
+        if ($hasHeader) { $content = $content -replace $headerPattern, "" }
+        if ($hasFooter) { $content = $content -replace $footerPattern, "" }
+
+        # Rebuild content
+        $newContent = $Metadata.YAML + "`r`n" + $content.TrimEnd() + "`r`n" + $Metadata.Footer
+        Set-Content -Path $FilePath -Value $newContent -Encoding UTF8
+
+        Write-WikiMetadataLog -Message "Updated (tags changed): $($Metadata.Path)" -LogPath $LogPath
+    }
+    else {
+        Write-WikiMetadataLog -Message "Skipped (tags already correct): $($Metadata.Path)" -LogPath $LogPath
+    }
+}
+
+function Write-WikiMetadataDictionary {
+    param(
+        [Parameter(Mandatory=$true)]
+        [string]$RepoRoot,
+
+        [Parameter(Mandatory=$true)]
+        [string]$DictWritePath,
+
+        [Parameter(Mandatory=$true)]
+        [string[]]$Tags,
+
+        [Parameter(Mandatory=$true)]
+        [string]$LogPath
+    )
+
+    $dictTargetPath = Join-Path $RepoRoot $DictWritePath
+    $dictTargetDir  = Split-Path $dictTargetPath -Parent
+
+    if (-not (Test-Path $dictTargetDir)) {
+        New-Item -Path $dictTargetDir -ItemType Directory | Out-Null
+        Write-WikiMetadataLog -Message "Created dictionary directory: $dictTargetDir" -LogPath $LogPath
+    }
+
+    $uniqueTags = $Tags | Sort-Object -Unique
+
+    $content = @(
+        "# Tag Dictionary"
+        ""
+        "This file lists all unique tags generated from the wiki structure."
+        ""
+        foreach ($t in $uniqueTags) { "- $t" }
+    )
+
+    Set-Content -Path $dictTargetPath -Value $content -Encoding UTF8
+    Write-WikiMetadataLog -Message "Tag dictionary written to $DictWritePath with $($uniqueTags.Count) tags" -LogPath $LogPath
+}
