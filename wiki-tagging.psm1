@@ -13,8 +13,15 @@ function Get-WikiMetadata {
     )
 
     $fullPath = Resolve-Path $FilePath
-    $relativePath = $fullPath.Path.Substring($RepoRoot.Length).TrimStart('\')
-    $segments = $relativePath -split '\\'
+    if (-not ($fullPath.Path.StartsWith($RepoRoot, [System.StringComparison]::OrdinalIgnoreCase))) {
+        # Handle root-level file (e.g., client.md in parent folder)
+        $relativePath = [IO.Path]::GetFileName($fullPath.Path)
+        $segments = @($relativePath)
+    }
+    else {
+        $relativePath = $fullPath.Path.Substring($RepoRoot.Length).TrimStart('\')
+        $segments = $relativePath -split '\\'
+    }
 
     $fileName = [IO.Path]::GetFileNameWithoutExtension($segments[-1])
     $folders  = $segments[0..($segments.Length-2)]
