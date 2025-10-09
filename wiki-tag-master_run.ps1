@@ -54,6 +54,15 @@ foreach ($f in $files) {
             if ($hasHeader) { $content = $content -replace $headerPattern, "" }
             if ($hasFooter) { $content = $content -replace $footerPattern, "" }
 
+            if ($null -eq $result -or $null -eq $result.YAML -or $null -eq $result.Footer) {
+                "Skipped (null metadata): $($f.FullName)" | Out-File -FilePath $logPath -Append
+                continue
+            }
+
+            if ($null -eq $content -or $content.Trim().Length -eq 0) {
+                "Skipped (empty or unreadable content): $($f.FullName)" | Out-File -FilePath $logPath -Append
+                continue
+            }
             # Rebuild content with fresh header/footer
             $newContent = $result.YAML + "`r`n" + $content.TrimEnd() + "`r`n" + $result.Footer
 
