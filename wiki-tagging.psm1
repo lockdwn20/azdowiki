@@ -157,7 +157,7 @@ function Backup-WikiFiles {
 
     switch ($Mode) {
         "Create" {
-            if (-not (Test-Path $backup)) {
+            if (-not (Test-Path $backup) {
                 Copy-Item -Path $FilePath -Destination $backup
                 Write-WikiMetadataLog -Message "Backup created: $FilePath" -LogPath $LogPath
             }
