@@ -16,15 +16,18 @@ function Get-WikiMetadata {
     $relativePath = $fullPath.Path.Substring($RepoRoot.Length).TrimStart('\')
     $segments = $relativePath -split '\\'
 
+    # --- FIX: handle root-level files cleanly ---
     $fileName = [IO.Path]::GetFileNameWithoutExtension($segments[-1])
     if ($segments.Length -gt 1) {
-        # Only take folder segments if there’s actually a folder path
+        # Only treat preceding segments as folders if they exist
         $folders = $segments[0..($segments.Length-2)]
     }
     else {
         $folders = @()
     }
+    # --------------------------------------------
 
+    # Build exclusion set
     $excludedSet = [System.Collections.Generic.HashSet[string]]::new([StringComparer]::OrdinalIgnoreCase)
     foreach ($d in $ExcludeDirs) { [void]$excludedSet.Add($d) }
     if ($folders | Where-Object { $excludedSet.Contains($_) }) { return $null }
