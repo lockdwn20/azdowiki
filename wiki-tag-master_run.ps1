@@ -26,7 +26,7 @@ if (Test-Path $rootLevelFile) {
 }
 
 # === Add all .md files inside repoRoot, excluding specified dirs ===
-$files = Get-ChildItem -Path $repoRoot -Recurse -File -Filter *.md |
+$files += Get-ChildItem -Path $repoRoot -Recurse -File -Filter *.md |
     Where-Object { $_.FullName -notmatch "\\($($excludeDirs -join '|'))\\" }
 
 $allTags = @()
