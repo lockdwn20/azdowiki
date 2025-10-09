@@ -2,7 +2,7 @@
 
 $repoRoot     = "C:\User\GITUSER\GIT\Wiki\Wiki-Root"
 $excludeDirs  = @("Archive","Templates")
-
+$backupMode   = "<Mode>" #Create, Delete or None mode for backup files
 # Markdown-friendly link for wiki footers
 $dictLink     = "/Wiki/Wiki-Root/Tags/Tag_Dictionary.md"
 
@@ -25,7 +25,7 @@ foreach ($f in $files) {
     $result = Get-WikiMetadata -FilePath $f.FullName -RepoRoot $repoRoot -TagDictionaryLink $dictLink -ExcludeDirs $excludeDirs
     if ($null -ne $result) {
         $allTags += $result.Tags
-        Update-WikiFile -FilePath $f.FullName -Metadata $result -LogPath $logPath -DictLink $dictLink
+        Update-WikiFile -FilePath $f.FullName -Metadata $result -LogPath $logPath -DictLink $dictLink -BackupMode $backupMode
     }
 }
 
