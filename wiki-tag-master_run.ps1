@@ -40,38 +40,38 @@ foreach ($f in $files) {
         $expectedLink = "[Tag Dictionary]($dictLink)"
         $headerPattern = "(?s)^---.*?---\s*"
         $footerPattern = "(?s)---\s*\*\*Tags:\*\*.*?\[Tag Dictionary\]\(.*?\)\s*---"
-
+        
         $hasHeader = $content -match $headerPattern
         $hasFooter = $content -match $footerPattern
-
-        if (-not $hasHeader -or -not $hasFooter) {
+        
+        # --- Extract existing tags if present ---
+        $existingTags = @()
+        if ($hasHeader) {
+            if ($content -match "(?s)^---.*?tags:(.*?)---") {
+                $raw = $matches[1] -split "`r?`n"
+                $existingTags = $raw -replace "^\s*-\s*", "" | Where-Object { $_ -ne "" }
+            }
+        }
+        
+        # Compare sets
+        $tagsDiffer = (@($existingTags | Sort-Object) -join ',') -ne (@($result.Tags | Sort-Object) -join ',')
+        
+        if (-not $hasHeader -or -not $hasFooter -or $tagsDiffer) {
             $backup = "$($f.FullName).bak"
             if (-not (Test-Path $backup)) {
                 Copy-Item -Path $f.FullName -Destination $backup
                 "Backup created: $($result.Path)" | Out-File -FilePath $logPath -Append
             }
-
-            # Remove existing header/footer if present
+        
             if ($hasHeader) { $content = $content -replace $headerPattern, "" }
             if ($hasFooter) { $content = $content -replace $footerPattern, "" }
-
-            if ($null -eq $result -or $null -eq $result.YAML -or $null -eq $result.Footer) {
-                "Skipped (null metadata): $($f.FullName)" | Out-File -FilePath $logPath -Append
-                continue
-            }
-
-            if ($null -eq $content -or $content.Trim().Length -eq 0) {
-                "Skipped (empty or unreadable content): $($f.FullName)" | Out-File -FilePath $logPath -Append
-                continue
-            }
-            # Rebuild content with fresh header/footer
+        
             $newContent = $result.YAML + "`r`n" + $content.TrimEnd() + "`r`n" + $result.Footer
-
             Set-Content -Path $f.FullName -Value $newContent
-            "Updated: $($result.Path)" | Out-File -FilePath $logPath -Append
+            "Updated (tags changed): $($result.Path)" | Out-File -FilePath $logPath -Append
         }
         else {
-            "Skipped (already tagged and linked): $($result.Path)" | Out-File -FilePath $logPath -Append
+            "Skipped (tags already correct): $($result.Path)" | Out-File -FilePath $logPath -Append
         }
     }
 }
