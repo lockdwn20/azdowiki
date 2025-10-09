@@ -17,7 +17,13 @@ function Get-WikiMetadata {
     $segments = $relativePath -split '\\'
 
     $fileName = [IO.Path]::GetFileNameWithoutExtension($segments[-1])
-    $folders  = $segments[0..($segments.Length-2)]
+    if ($segments.Length -gt 1) {
+        # Only take folder segments if there’s actually a folder path
+        $folders = $segments[0..($segments.Length-2)]
+    }
+    else {
+        $folders = @()
+    }
 
     $excludedSet = [System.Collections.Generic.HashSet[string]]::new([StringComparer]::OrdinalIgnoreCase)
     foreach ($d in $ExcludeDirs) { [void]$excludedSet.Add($d) }
