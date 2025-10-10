@@ -317,6 +317,10 @@ function Update-WikiFile {
 
     # Read the file content
     $content = Get-Content -Path $FilePath -Raw
+    # Ensure content is never null or empty
+    if ([string]::IsNullOrWhiteSpace($content)) {
+        $content = " "
+    }
 
     # Run unified validation
     $validation = Test-WikiMetadata -Content $content -ExpectedTags $Metadata.Tags -DictLink $DictLink
