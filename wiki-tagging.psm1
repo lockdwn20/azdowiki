@@ -16,22 +16,21 @@ function Get-WikiMetadata {
     $relativePath = $fullPath.Path.Substring($RepoRoot.Length).TrimStart('\')
     $segments = $relativePath -split '\\'
 
-    # --- FIX: handle root-level files cleanly ---
+    # --- Handle root-level files cleanly ---
     $fileName = [IO.Path]::GetFileNameWithoutExtension($segments[-1])
     if ($segments.Length -gt 1) {
-        # Only treat preceding segments as folders if they exist
         $folders = $segments[0..($segments.Length-2)]
     }
     else {
         $folders = @()
     }
-    # --------------------------------------------
 
     # Build exclusion set
     $excludedSet = [System.Collections.Generic.HashSet[string]]::new([StringComparer]::OrdinalIgnoreCase)
     foreach ($d in $ExcludeDirs) { [void]$excludedSet.Add($d) }
     if ($folders | Where-Object { $excludedSet.Contains($_) }) { return $null }
 
+    # Build tags from path segments + file name + repo root
     $tags = @()
     foreach ($f in $folders) { $tags += $f -split '-' }
     $tags += $fileName -split '-'
@@ -44,30 +43,61 @@ function Get-WikiMetadata {
         if ($clean.Length -gt 0) { $clean }
     } | Where-Object { $_ -ne "" } | Sort-Object -Unique
 
-    $header = @()
-    $header += "---"
-    $header += "title: $fileName"
-    $header += "description: "
-    $header += "tags:"
-    foreach ($t in $tags) { $header += "  - $t" }
-    $header += "---"
-
-    $footer = @()
-    $footer += "---"
-    $footer += "**Tags:** " + (@($tags | ForEach-Object { "#$_" }) -join ", ")
-    $footer += ""
-    foreach ($t in $tags) { $footer += "<!-- TAG: $t -->" }
-    $footer += ""
-    $footer += "[Tag Dictionary]($TagDictionaryLink)"
-    $footer += "---"
+    # Use helpers to build header/footer
+    $header = Build-WikiHeader -Title $fileName -Tags $tags
+    $footer = Build-WikiFooter -Tags $tags -DictLink $TagDictionaryLink
 
     return @{
         File   = $fileName
         Path   = $relativePath
-        Header   = ($header -join "`r`n")
-        Footer = ($footer -join "`r`n")
+        Header = $header
+        Footer = $footer
         Tags   = $tags
     }
+}
+
+function Build-WikiHeader {
+    param(
+        [Parameter(Mandatory=$true)]
+        [string]$Title,
+
+        [Parameter(Mandatory=$true)]
+        [string[]]$Tags
+    )
+
+    $tagsBlock = ($Tags | ForEach-Object { "  - $_" }) -join "`r`n"
+
+@"
+---
+title: $Title
+description:
+tags:
+$tagsBlock
+---
+"@
+}
+
+function Build-WikiFooter {
+    param(
+        [Parameter(Mandatory=$true)]
+        [string[]]$Tags,
+
+        [Parameter(Mandatory=$true)]
+        [string]$DictLink
+    )
+
+    $tagsList = ($Tags | ForEach-Object { "- $_" }) -join "`r`n"
+
+@"
+---
+**Tags:**
+$tagsList
+
+<div class="notoc">
+[Tag Dictionary]($DictLink)
+</div>
+---
+"@
 }
 
 function Write-WikiMetadataLog {
@@ -285,9 +315,9 @@ function Update-WikiFile {
         $cleanTags = $Metadata.Tags | Sort-Object -Unique
 
         # Rebuild fresh header + footer with consistent spacing
-        $rebuiltContent = $Metadata.Header + "`r`n`r`n" +
+        $rebuiltContent = (Build-WikiHeader -Title $Metadata.File -Tags $cleanTags) + "`r`n`r`n" +
                           $cleanBody + "`r`n`r`n" +
-                          $Metadata.Footer
+                          (Build-WikiFooter -Tags $cleanTags -DictLink $DictLink)
 
         # Normalize line endings and trim trailing whitespace
         $rebuiltContent = ($rebuiltContent -replace "`r?`n", "`r`n").TrimEnd()
