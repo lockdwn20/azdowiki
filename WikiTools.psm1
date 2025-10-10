@@ -50,8 +50,8 @@ function Get-WikiMetadata {
     } | Where-Object { $_ -ne "" } | Sort-Object -Unique
 
     # Use helpers to build header/footer
-    $header = Build-WikiHeader -Title $fileName -Tags $tags
-    $footer = Build-WikiFooter -Tags $tags -DictLink $TagDictionaryLink
+    $header = Format-WikiHeader -Title $fileName -Tags $tags
+    $footer = Format-WikiFooter -Tags $tags -DictLink $TagDictionaryLink
 
     return @{
         File   = $fileName
@@ -62,7 +62,7 @@ function Get-WikiMetadata {
     }
 }
 
-function Build-WikiHeader {
+function Format-WikiHeader {
     param(
         [Parameter(Mandatory=$true)]
         [string]$Title,
@@ -83,7 +83,7 @@ $tagsBlock
 "@
 }
 
-function Build-WikiFooter {
+function Format-WikiFooter {
     param(
         [Parameter(Mandatory=$true)]
         [string[]]$Tags,
@@ -339,9 +339,9 @@ function Update-WikiFile {
         $cleanTags = $Metadata.Tags | Sort-Object -Unique
 
         # Rebuild fresh header + footer with consistent spacing
-        $rebuiltContent = (Build-WikiHeader -Title $Metadata.File -Tags $cleanTags) + "`r`n`r`n" +
+        $rebuiltContent = (Format-WikiHeader -Title $Metadata.File -Tags $cleanTags) + "`r`n`r`n" +
                           $cleanBody + "`r`n`r`n" +
-                          (Build-WikiFooter -Tags $cleanTags -DictLink $DictLink)
+                          (Format-WikiFooter -Tags $cleanTags -DictLink $DictLink)
 
         # Normalize line endings and trim trailing whitespace
         $rebuiltContent = ($rebuiltContent -replace "`r?`n", "`r`n").TrimEnd()
