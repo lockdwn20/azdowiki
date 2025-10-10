@@ -201,12 +201,6 @@ function Update-WikiFile {
     $hasFooter = $content -match $footerPattern
     $existingDictLink = if ($hasFooter) { $matches[1] } else { "" }
 
-    # Validate tags
-    $validation = Test-WikiMetadata -Content $content -ExpectedTags $Metadata.Tags
-
-    # Detect dictionary link drift
-    $dictLinkChanged = $existingDictLink -ne $DictLink
-
     # --- Strip old header/footer first ---
     $body = $content
     if ($hasHeader) { $body = $body -replace $headerPattern, "" }
@@ -216,6 +210,12 @@ function Update-WikiFile {
     $rebuiltContent = $Metadata.YAML + "`r`n`r`n" + `
                       $body.TrimEnd() + "`r`n`r`n" + `
                       $Metadata.Footer
+
+    # --- Validate tags against rebuilt content ---
+    $validation = Test-WikiMetadata -Content $rebuiltContent -ExpectedTags $Metadata.Tags
+
+    # Detect dictionary link drift
+    $dictLinkChanged = $existingDictLink -ne $DictLink
 
     # Normalize for comparison
     $normalizedCurrent = ($content -replace "\r\n", "`n").Trim()
