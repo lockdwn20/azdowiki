@@ -110,7 +110,7 @@ $($tagComments -join "`r`n")
 }
 
 
-function Write-WikiMetadataLog {
+function Out-WikiMetadataLog {
     param(
         [Parameter(Mandatory=$true)]
         [string]$Message,
@@ -282,13 +282,13 @@ function Backup-WikiFiles {
         "Create" {
             if (-not (Test-Path $backup)) {
                 Copy-Item -Path $FilePath -Destination $backup
-                Write-WikiMetadataLog -Message "Backup created: $FilePath" -LogPath $LogPath
+                Out-WikiMetadataLog -Message "Backup created: $FilePath" -LogPath $LogPath
             }
         }
         "Delete" {
             if (Test-Path $backup) {
                 Remove-Item $backup -Force
-                Write-WikiMetadataLog -Message "Backup deleted: $FilePath" -LogPath $LogPath
+                Out-WikiMetadataLog -Message "Backup deleted: $FilePath" -LogPath $LogPath
             }
         }
         "None" {
@@ -350,10 +350,10 @@ function Update-WikiFile {
         Set-Content -Path $FilePath -Value $rebuiltContent -Encoding UTF8
 
         # Log with reason(s)
-        Write-WikiMetadataLog -Message "Updated ($($validation.Reason)): $($Metadata.Path)" -LogPath $LogPath
+        Out-WikiMetadataLog -Message "Updated ($($validation.Reason)): $($Metadata.Path)" -LogPath $LogPath
     }
     else {
-        Write-WikiMetadataLog -Message "Skipped (already correct): $($Metadata.Path)" -LogPath $LogPath
+        Out-WikiMetadataLog -Message "Skipped (already correct): $($Metadata.Path)" -LogPath $LogPath
     }
 
     # Optional cleanup of backups
@@ -362,7 +362,7 @@ function Update-WikiFile {
     }
 }
 
-function Write-WikiMetadataDictionary {
+function Export-WikiMetadataDictionary {
     param(
         [Parameter(Mandatory=$true)]
         [string]$RepoRoot,
@@ -382,7 +382,7 @@ function Write-WikiMetadataDictionary {
 
     if (-not (Test-Path $dictTargetDir)) {
         New-Item -Path $dictTargetDir -ItemType Directory | Out-Null
-        Write-WikiMetadataLog -Message "Created dictionary directory: $dictTargetDir" -LogPath $LogPath
+        Out-WikiMetadataLog -Message "Created dictionary directory: $dictTargetDir" -LogPath $LogPath
     }
 
     $uniqueTags = $Tags | Sort-Object -Unique
@@ -396,5 +396,5 @@ function Write-WikiMetadataDictionary {
     )
 
     Set-Content -Path $dictTargetPath -Value $content -Encoding UTF8
-    Write-WikiMetadataLog -Message "Tag dictionary written to $DictWritePath with $($uniqueTags.Count) tags" -LogPath $LogPath
+    Out-WikiMetadataLog -Message "Tag dictionary written to $DictWritePath with $($uniqueTags.Count) tags" -LogPath $LogPath
 }
