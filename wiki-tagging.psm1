@@ -213,10 +213,13 @@ function Update-WikiFile {
         if ($hasHeader) { $content = $content -replace $headerPattern, "" }
         if ($hasFooter) { $content = $content -replace $footerPattern, "" }
 
-        $newContent = $Metadata.YAML + "`r`n" + $content.TrimEnd() + "`r`n" + $Metadata.Footer
+        $newContent = $Metadata.YAML + "`r`n`r`n" +   # <-- extra newline after header
+                      $content.TrimEnd() + "`r`n`r`n" + # <-- extra newline before footer
+                      $Metadata.Footer
+
         Set-Content -Path $FilePath -Value $newContent -Encoding UTF8
 
-        Write-WikiMetadataLog -Message "Updated (tags or dictionary link changed): $($Metadata.Path)" -LogPath $LogPath
+        Write-WikiMetadataLog -Message "Updated (tags/dict link/formatting changed): $($Metadata.Path)" -LogPath $LogPath
     }
     else {
         Write-WikiMetadataLog -Message "Skipped (tags and dictionary link already correct): $($Metadata.Path)" -LogPath $LogPath
