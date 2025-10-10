@@ -265,6 +265,7 @@ function Update-WikiFile {
         [string]$BackupMode = "Create"
     )
 
+    # Read the file content
     $content = Get-Content -Path $FilePath -Raw
 
     # Run unified validation
@@ -273,8 +274,11 @@ function Update-WikiFile {
     if ($validation.NeedsRebuild) {
         Backup-WikiFiles -FilePath $FilePath -LogPath $LogPath -Mode $BackupMode
 
-        # Strip old header/footer
-        $body = $content -replace "(?s)^---.*?---", "" -replace "(?s)---\s*\*\*Tags:\*\*.*?---", ""
+        # Strip ALL old headers and footers (including duplicates)
+        # Header must start with '---' + 'title:'
+        $body = $content -replace "(?s)^---\r?\ntitle:.*?---", ""
+        # Footer must start with '---' + '**Tags:**'
+        $body = $body   -replace "(?s)---\r?\n\*\*Tags:\*\*.*?---", ""
 
         # Deduplicate tags before rebuild
         $cleanTags = $Metadata.Tags | Sort-Object -Unique
@@ -284,13 +288,17 @@ function Update-WikiFile {
                           $body.TrimEnd() + "`r`n`r`n" +
                           $Metadata.Footer
 
+        # Write updated file
         Set-Content -Path $FilePath -Value $rebuiltContent -Encoding UTF8
+
+        # Log with reason(s)
         Write-WikiMetadataLog -Message "Updated ($($validation.Reason)): $($Metadata.Path)" -LogPath $LogPath
     }
     else {
         Write-WikiMetadataLog -Message "Skipped (already correct): $($Metadata.Path)" -LogPath $LogPath
     }
 
+    # Optional cleanup of backups
     if ($BackupMode -eq "Delete") {
         Backup-WikiFiles -FilePath $FilePath -LogPath $LogPath -Mode Delete
     }
