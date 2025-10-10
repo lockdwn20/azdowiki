@@ -211,18 +211,18 @@ function Update-WikiFile {
                       $body.TrimEnd() + "`r`n`r`n" + `
                       $Metadata.Footer
 
-    # --- Validate tags against rebuilt content ---
-    $validation = Test-WikiMetadata -Content $rebuiltContent -ExpectedTags $Metadata.Tags
+    # --- Validate tags against the *current* content ---
+    $validation = Test-WikiMetadata -Content $content -ExpectedTags $Metadata.Tags
+
     # Debug log: show what tags were found vs expected
     Write-WikiMetadataLog -Message ("DEBUG: Existing tags = [" + ($validation.Existing -join ',') + "], Expected = [" + ($Metadata.Tags -join ',') + "]") -LogPath $LogPath
 
     # Detect dictionary link drift
     $dictLinkChanged = $existingDictLink -ne $DictLink
 
-    # Normalize for comparison
+    # Detect formatting drift (spacing, blank lines, etc.)
     $normalizedCurrent = ($content -replace "\r\n", "`n").Trim()
     $normalizedRebuilt = ($rebuiltContent -replace "\r\n", "`n").Trim()
-
     $formattingDiffers = $normalizedCurrent -ne $normalizedRebuilt
 
     if (-not $hasHeader -or -not $hasFooter -or $validation.TagsDiffer -or $dictLinkChanged -or $formattingDiffers) {
