@@ -203,16 +203,27 @@ function Test-WikiMetadata {
 
     # --- Parse tags from footer ---
     $footerTags = @()
+
     if ($footerBlock -match "\*\*Tags:\*\*") {
-        $lines = $footerBlock -split "`r?`n"
-        foreach ($line in $lines) {
-            if ($line -match "^\s*-\s*(.+)$") {
-                $footerTags += $Matches[1].Trim()
+        # 1. Hashtag line
+        if ($footerBlock -match "\*\*Tags:\*\*\s*(.+)") {
+            $hashtags = $Matches[1] -split ","
+            foreach ($h in $hashtags) {
+                $footerTags += ($h.Trim() -replace "^#","")
             }
+        }
+
+        # 2. Hidden HTML comments
+        $commentMatches = [regex]::Matches($footerBlock, "<!--\s*TAG:\s*(.+?)\s*-->")
+        foreach ($m in $commentMatches) {
+            $footerTags += $m.Groups[1].Value.Trim()
         }
     }
 
-    # --- Detect duplicate tags ---
+    # --- Deduplicate ---
+    $footerTags = $footerTags | Sort-Object -Unique
+
+    # --- Detect duplicate tags across header/footer ---
     $allTags = $headerTags + $footerTags
     $duplicates = $allTags | Group-Object | Where-Object { $_.Count -gt 1 } | Select-Object -ExpandProperty Name
     $hasDuplicateTags = $duplicates.Count -gt 0
@@ -221,7 +232,6 @@ function Test-WikiMetadata {
     $headerVsFooterMatch = (@($headerTags | Sort-Object -Unique) -join ",") -eq (@($footerTags | Sort-Object -Unique) -join ",")
     $headerVsExpected    = (@($headerTags | Sort-Object -Unique) -join ",") -eq (@($ExpectedTags | Sort-Object -Unique) -join ",")
     $footerVsExpected    = (@($footerTags | Sort-Object -Unique) -join ",") -eq (@($ExpectedTags | Sort-Object -Unique) -join ",")
-
     $tagsDiffer = -not ($headerVsFooterMatch -and $headerVsExpected -and $footerVsExpected) -or $hasDuplicateTags
 
     # --- Detect dictionary link drift ---
