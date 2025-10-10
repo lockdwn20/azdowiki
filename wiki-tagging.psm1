@@ -204,25 +204,31 @@ function Update-WikiFile {
     # Validate tags
     $validation = Test-WikiMetadata -Content $content -ExpectedTags $Metadata.Tags
 
-    # NEW: detect dictionary link drift
+    # Detect dictionary link drift
     $dictLinkChanged = $existingDictLink -ne $DictLink
 
-    if (-not $hasHeader -or -not $hasFooter -or $validation.TagsDiffer -or $dictLinkChanged) {
+    # Build what the new content *should* look like (with enforced blank lines)
+    $rebuiltContent = $Metadata.YAML + "`r`n`r`n" + `
+                      $content.TrimEnd() + "`r`n`r`n" + `
+                      $Metadata.Footer
+
+    # Normalize both current and rebuilt content for comparison
+    $normalizedCurrent = ($content -replace "\r\n", "`n").Trim()
+    $normalizedRebuilt = ($rebuiltContent -replace "\r\n", "`n").Trim()
+
+    $formattingDiffers = $normalizedCurrent -ne $normalizedRebuilt
+
+    if (-not $hasHeader -or -not $hasFooter -or $validation.TagsDiffer -or $dictLinkChanged -or $formattingDiffers) {
         Backup-WikiFiles -FilePath $FilePath -LogPath $LogPath -Mode $BackupMode
 
         if ($hasHeader) { $content = $content -replace $headerPattern, "" }
         if ($hasFooter) { $content = $content -replace $footerPattern, "" }
 
-        $newContent = $Metadata.YAML + "`r`n`r`n" +   # <-- extra newline after header
-                      $content.TrimEnd() + "`r`n`r`n" + # <-- extra newline before footer
-                      $Metadata.Footer
-
-        Set-Content -Path $FilePath -Value $newContent -Encoding UTF8
-
+        Set-Content -Path $FilePath -Value $rebuiltContent -Encoding UTF8
         Write-WikiMetadataLog -Message "Updated (tags/dict link/formatting changed): $($Metadata.Path)" -LogPath $LogPath
     }
     else {
-        Write-WikiMetadataLog -Message "Skipped (tags and dictionary link already correct): $($Metadata.Path)" -LogPath $LogPath
+        Write-WikiMetadataLog -Message "Skipped (already correct): $($Metadata.Path)" -LogPath $LogPath
     }
 
     if ($BackupMode -eq "Delete") {
