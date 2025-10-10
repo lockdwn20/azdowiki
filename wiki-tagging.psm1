@@ -118,26 +118,99 @@ function Test-WikiMetadata {
         [string]$Content,
 
         [Parameter(Mandatory=$true)]
-        [string[]]$ExpectedTags
+        [string[]]$ExpectedTags,
+
+        [Parameter(Mandatory=$true)]
+        [string]$DictLink
     )
 
-    $headerPattern = "(?s)^---.*?---\s*"
-    $hasHeader = $Content -match $headerPattern
+    # --- Detect header/footer anchors ---
+    $headerMatches = [regex]::Matches($Content, "(?m)^---\r?\ntitle:")
+    $footerMatches = [regex]::Matches($Content, "(?m)^---\r?\n\*\*Tags:\*\*")
 
-    $existingTags = @()
+    $hasHeader       = $headerMatches.Count -ge 1
+    $hasFooter       = $footerMatches.Count -ge 1
+    $duplicateHeader = $headerMatches.Count -gt 1
+    $duplicateFooter = $footerMatches.Count -gt 1
+
+    # --- Extract header block (first only) ---
+    $headerBlock = ""
     if ($hasHeader) {
-        if ($Content -match "(?s)^---.*?tags:(.*?)---") {
-            $raw = $matches[1] -split "`r?`n"
-            $existingTags = $raw -replace "^\s*-\s*", "" | Where-Object { $_ -ne "" }
+        $headerPattern = "(?s)^---\s*.*?---"
+        $m = [regex]::Match($Content, $headerPattern)
+        if ($m.Success) { $headerBlock = $m.Value }
+    }
+
+    # --- Parse tags from header ---
+    $headerTags = @()
+    if ($headerBlock -match "tags:\s*") {
+        $lines = $headerBlock -split "`r?`n"
+        foreach ($line in $lines) {
+            if ($line -match "^\s*-\s*(.+)$") {
+                $headerTags += $Matches[1].Trim()
+            }
         }
     }
 
-    # Compare sorted sets
-    $tagsDiffer = (@($existingTags | Sort-Object) -join ',') -ne (@($ExpectedTags | Sort-Object) -join ',')
+    # --- Extract footer block (first only) ---
+    $footerBlock = ""
+    if ($hasFooter) {
+        $footerPattern = "(?s)^---\s*\*\*Tags:\*\*.*?---"
+        $mFooter = [regex]::Match($Content, $footerPattern)
+        if ($mFooter.Success) { $footerBlock = $mFooter.Value }
+    }
+
+    # --- Parse tags from footer ---
+    $footerTags = @()
+    if ($footerBlock -match "\*\*Tags:\*\*") {
+        $lines = $footerBlock -split "`r?`n"
+        foreach ($line in $lines) {
+            if ($line -match "^\s*-\s*(.+)$") {
+                $footerTags += $Matches[1].Trim()
+            }
+        }
+    }
+
+    # --- Detect duplicate tags ---
+    $allTags = $headerTags + $footerTags
+    $duplicates = $allTags | Group-Object | Where-Object { $_.Count -gt 1 } | Select-Object -ExpandProperty Name
+    $hasDuplicateTags = $duplicates.Count -gt 0
+
+    # --- Compare sets ---
+    $headerVsFooterMatch = (@($headerTags | Sort-Object -Unique) -join ",") -eq (@($footerTags | Sort-Object -Unique) -join ",")
+    $headerVsExpected    = (@($headerTags | Sort-Object -Unique) -join ",") -eq (@($ExpectedTags | Sort-Object -Unique) -join ",")
+    $footerVsExpected    = (@($footerTags | Sort-Object -Unique) -join ",") -eq (@($ExpectedTags | Sort-Object -Unique) -join ",")
+
+    $tagsDiffer = -not ($headerVsFooterMatch -and $headerVsExpected -and $footerVsExpected) -or $hasDuplicateTags
+
+    # --- Detect dictionary link drift ---
+    $dictPattern = "\[Tag Dictionary\]\((.*?)\)"
+    $existingDictLink = if ($footerBlock -match $dictPattern) { $Matches[1] } else { "" }
+    $dictLinkChanged = $existingDictLink -ne $DictLink
+
+    # --- Structure validity ---
+    $structureValid = $hasHeader -and $hasFooter -and -not $duplicateHeader -and -not $duplicateFooter
+
+    # --- Build reason string ---
+    $reasons = @()
+    if (-not $structureValid) {
+        if (-not $hasHeader)       { $reasons += "Missing header" }
+        if (-not $hasFooter)       { $reasons += "Missing footer" }
+        if ($duplicateHeader)      { $reasons += "Duplicate header" }
+        if ($duplicateFooter)      { $reasons += "Duplicate footer" }
+    }
+    if ($tagsDiffer)              { $reasons += "Tag mismatch/duplicates" }
+    if ($dictLinkChanged)         { $reasons += "Dictionary link drift" }
+
     return @{
-        HasHeader   = $hasHeader
-        Existing    = $existingTags
-        TagsDiffer  = $tagsDiffer
+        NeedsRebuild    = $reasons.Count -gt 0
+        StructureValid  = $structureValid
+        TagsDiffer      = $tagsDiffer
+        DictLinkChanged = $dictLinkChanged
+        HeaderTags      = $headerTags
+        FooterTags      = $footerTags
+        Duplicates      = $duplicates
+        Reason          = ($reasons -join "; ")
     }
 }
 
@@ -194,42 +267,25 @@ function Update-WikiFile {
 
     $content = Get-Content -Path $FilePath -Raw
 
-    $headerPattern = "(?s)^---.*?---\s*"
-    $footerPattern = "(?s)---\s*\*\*Tags:\*\*.*?\[Tag Dictionary\]\((.*?)\)\s*---"
+    # Run unified validation
+    $validation = Test-WikiMetadata -Content $content -ExpectedTags $Metadata.Tags -DictLink $DictLink
 
-    $hasHeader = $content -match $headerPattern
-    $hasFooter = $content -match $footerPattern
-    $existingDictLink = if ($hasFooter) { $matches[1] } else { "" }
-
-    # --- Strip old header/footer first ---
-    $body = $content
-    if ($hasHeader) { $body = $body -replace $headerPattern, "" }
-    if ($hasFooter) { $body = $body -replace $footerPattern, "" }
-
-    # --- Build the new content cleanly ---
-    $rebuiltContent = $Metadata.YAML + "`r`n`r`n" + `
-                      $body.TrimEnd() + "`r`n`r`n" + `
-                      $Metadata.Footer
-
-    # --- Validate tags against the *current* content ---
-    $validation = Test-WikiMetadata -Content $content -ExpectedTags $Metadata.Tags
-
-    # Debug log: show what tags were found vs expected
-    Write-WikiMetadataLog -Message ("DEBUG: Existing tags = [" + ($validation.Existing -join ',') + "], Expected = [" + ($Metadata.Tags -join ',') + "]") -LogPath $LogPath
-
-    # Detect dictionary link drift
-    $dictLinkChanged = $existingDictLink -ne $DictLink
-
-    # Detect formatting drift (spacing, blank lines, etc.)
-    $normalizedCurrent = ($content -replace "\r\n", "`n").Trim()
-    $normalizedRebuilt = ($rebuiltContent -replace "\r\n", "`n").Trim()
-    $formattingDiffers = $normalizedCurrent -ne $normalizedRebuilt
-
-    if (-not $hasHeader -or -not $hasFooter -or $validation.TagsDiffer -or $dictLinkChanged -or $formattingDiffers) {
+    if ($validation.NeedsRebuild) {
         Backup-WikiFiles -FilePath $FilePath -LogPath $LogPath -Mode $BackupMode
 
+        # Strip old header/footer
+        $body = $content -replace "(?s)^---.*?---", "" -replace "(?s)---\s*\*\*Tags:\*\*.*?---", ""
+
+        # Deduplicate tags before rebuild
+        $cleanTags = $Metadata.Tags | Sort-Object -Unique
+
+        # Rebuild fresh header + footer
+        $rebuiltContent = $Metadata.YAML + "`r`n`r`n" +
+                          $body.TrimEnd() + "`r`n`r`n" +
+                          $Metadata.Footer
+
         Set-Content -Path $FilePath -Value $rebuiltContent -Encoding UTF8
-        Write-WikiMetadataLog -Message "Updated (tags/dict link/formatting changed): $($Metadata.Path)" -LogPath $LogPath
+        Write-WikiMetadataLog -Message "Updated ($($validation.Reason)): $($Metadata.Path)" -LogPath $LogPath
     }
     else {
         Write-WikiMetadataLog -Message "Skipped (already correct): $($Metadata.Path)" -LogPath $LogPath
