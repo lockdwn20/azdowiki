@@ -195,33 +195,33 @@ function Update-WikiFile {
     $content = Get-Content -Path $FilePath -Raw
 
     $headerPattern = "(?s)^---.*?---\s*"
-    $footerPattern = "(?s)---\s*\*\*Tags:\*\*.*?\[Tag Dictionary\]\(.*?\)\s*---"
+    $footerPattern = "(?s)---\s*\*\*Tags:\*\*.*?\[Tag Dictionary\]\((.*?)\)\s*---"
 
     $hasHeader = $content -match $headerPattern
     $hasFooter = $content -match $footerPattern
+    $existingDictLink = if ($hasFooter) { $matches[1] } else { "" }
 
     # Validate tags
     $validation = Test-WikiMetadata -Content $content -ExpectedTags $Metadata.Tags
 
-    if (-not $hasHeader -or -not $hasFooter -or $validation.TagsDiffer) {
-        # Backup before modifying (if mode = Create)
+    # NEW: detect dictionary link drift
+    $dictLinkChanged = $existingDictLink -ne $DictLink
+
+    if (-not $hasHeader -or -not $hasFooter -or $validation.TagsDiffer -or $dictLinkChanged) {
         Backup-WikiFiles -FilePath $FilePath -LogPath $LogPath -Mode $BackupMode
 
-        # Strip old header/footer if present
         if ($hasHeader) { $content = $content -replace $headerPattern, "" }
         if ($hasFooter) { $content = $content -replace $footerPattern, "" }
 
-        # Rebuild content
         $newContent = $Metadata.YAML + "`r`n" + $content.TrimEnd() + "`r`n" + $Metadata.Footer
         Set-Content -Path $FilePath -Value $newContent -Encoding UTF8
 
-        Write-WikiMetadataLog -Message "Updated (tags changed): $($Metadata.Path)" -LogPath $LogPath
+        Write-WikiMetadataLog -Message "Updated (tags or dictionary link changed): $($Metadata.Path)" -LogPath $LogPath
     }
     else {
-        Write-WikiMetadataLog -Message "Skipped (tags already correct): $($Metadata.Path)" -LogPath $LogPath
+        Write-WikiMetadataLog -Message "Skipped (tags and dictionary link already correct): $($Metadata.Path)" -LogPath $LogPath
     }
 
-    # Optional cleanup: if BackupMode = Delete, remove backup after update
     if ($BackupMode -eq "Delete") {
         Backup-WikiFiles -FilePath $FilePath -LogPath $LogPath -Mode Delete
     }
