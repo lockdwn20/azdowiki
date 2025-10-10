@@ -207,12 +207,17 @@ function Update-WikiFile {
     # Detect dictionary link drift
     $dictLinkChanged = $existingDictLink -ne $DictLink
 
-    # Build what the new content *should* look like (with enforced blank lines)
+    # --- Strip old header/footer so we only keep the body ---
+    $body = $content
+    if ($hasHeader) { $body = $body -replace $headerPattern, "" }
+    if ($hasFooter) { $body = $body -replace $footerPattern, "" }
+
+    # --- Build the new content with enforced blank lines ---
     $rebuiltContent = $Metadata.YAML + "`r`n`r`n" + `
-                      $content.TrimEnd() + "`r`n`r`n" + `
+                      $body.TrimEnd() + "`r`n`r`n" + `
                       $Metadata.Footer
 
-    # Normalize both current and rebuilt content for comparison
+    # Normalize for comparison (ignore line-ending style)
     $normalizedCurrent = ($content -replace "\r\n", "`n").Trim()
     $normalizedRebuilt = ($rebuiltContent -replace "\r\n", "`n").Trim()
 
@@ -220,9 +225,6 @@ function Update-WikiFile {
 
     if (-not $hasHeader -or -not $hasFooter -or $validation.TagsDiffer -or $dictLinkChanged -or $formattingDiffers) {
         Backup-WikiFiles -FilePath $FilePath -LogPath $LogPath -Mode $BackupMode
-
-        if ($hasHeader) { $content = $content -replace $headerPattern, "" }
-        if ($hasFooter) { $content = $content -replace $footerPattern, "" }
 
         Set-Content -Path $FilePath -Value $rebuiltContent -Encoding UTF8
         Write-WikiMetadataLog -Message "Updated (tags/dict link/formatting changed): $($Metadata.Path)" -LogPath $LogPath
