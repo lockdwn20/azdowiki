@@ -275,18 +275,22 @@ function Update-WikiFile {
         Backup-WikiFiles -FilePath $FilePath -LogPath $LogPath -Mode $BackupMode
 
         # Strip ALL old headers and footers (including duplicates)
-        # Header must start with '---' + 'title:'
         $body = $content -replace "(?s)^---\r?\ntitle:.*?---", ""
-        # Footer must start with '---' + '**Tags:**'
         $body = $body   -replace "(?s)---\r?\n\*\*Tags:\*\*.*?---", ""
+
+        # Normalize body whitespace
+        $cleanBody = $body.Trim()
 
         # Deduplicate tags before rebuild
         $cleanTags = $Metadata.Tags | Sort-Object -Unique
 
-        # Rebuild fresh header + footer
+        # Rebuild fresh header + footer with consistent spacing
         $rebuiltContent = $Metadata.YAML + "`r`n`r`n" +
-                          $body.TrimEnd() + "`r`n`r`n" +
+                          $cleanBody + "`r`n`r`n" +
                           $Metadata.Footer
+
+        # Normalize line endings and trim trailing whitespace
+        $rebuiltContent = ($rebuiltContent -replace "`r?`n", "`r`n").TrimEnd()
 
         # Write updated file
         Set-Content -Path $FilePath -Value $rebuiltContent -Encoding UTF8
