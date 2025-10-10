@@ -18,6 +18,12 @@ function Get-WikiMetadata {
 
     # --- Handle root-level files cleanly ---
     $fileName = [IO.Path]::GetFileNameWithoutExtension($segments[-1])
+
+    # Fallback if fileName is empty (e.g. root-level or malformed path)
+    if ([string]::IsNullOrWhiteSpace($fileName)) {
+        $fileName = Split-Path $RepoRoot -Leaf
+    }
+
     if ($segments.Length -gt 1) {
         $folders = $segments[0..($segments.Length-2)]
     }
