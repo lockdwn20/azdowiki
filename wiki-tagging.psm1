@@ -207,17 +207,17 @@ function Update-WikiFile {
     # Detect dictionary link drift
     $dictLinkChanged = $existingDictLink -ne $DictLink
 
-    # --- Strip old header/footer so we only keep the body ---
+    # --- Strip old header/footer first ---
     $body = $content
     if ($hasHeader) { $body = $body -replace $headerPattern, "" }
     if ($hasFooter) { $body = $body -replace $footerPattern, "" }
 
-    # --- Build the new content with enforced blank lines ---
+    # --- Build the new content cleanly ---
     $rebuiltContent = $Metadata.YAML + "`r`n`r`n" + `
                       $body.TrimEnd() + "`r`n`r`n" + `
                       $Metadata.Footer
 
-    # Normalize for comparison (ignore line-ending style)
+    # Normalize for comparison
     $normalizedCurrent = ($content -replace "\r\n", "`n").Trim()
     $normalizedRebuilt = ($rebuiltContent -replace "\r\n", "`n").Trim()
 
