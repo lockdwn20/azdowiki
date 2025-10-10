@@ -44,13 +44,13 @@ function Get-WikiMetadata {
         if ($clean.Length -gt 0) { $clean }
     } | Where-Object { $_ -ne "" } | Sort-Object -Unique
 
-    $yaml = @()
-    $yaml += "---"
-    $yaml += "title: $fileName"
-    $yaml += "description: "
-    $yaml += "tags:"
-    foreach ($t in $tags) { $yaml += "  - $t" }
-    $yaml += "---"
+    $header = @()
+    $header += "---"
+    $header += "title: $fileName"
+    $header += "description: "
+    $header += "tags:"
+    foreach ($t in $tags) { $header += "  - $t" }
+    $header += "---"
 
     $footer = @()
     $footer += "---"
@@ -64,7 +64,7 @@ function Get-WikiMetadata {
     return @{
         File   = $fileName
         Path   = $relativePath
-        YAML   = ($yaml -join "`r`n")
+        Header   = ($header -join "`r`n")
         Footer = ($footer -join "`r`n")
         Tags   = $tags
     }
@@ -285,7 +285,7 @@ function Update-WikiFile {
         $cleanTags = $Metadata.Tags | Sort-Object -Unique
 
         # Rebuild fresh header + footer with consistent spacing
-        $rebuiltContent = $Metadata.YAML + "`r`n`r`n" +
+        $rebuiltContent = $Metadata.Header + "`r`n`r`n" +
                           $cleanBody + "`r`n`r`n" +
                           $Metadata.Footer
 
