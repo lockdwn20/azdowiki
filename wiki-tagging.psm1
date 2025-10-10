@@ -213,6 +213,8 @@ function Update-WikiFile {
 
     # --- Validate tags against rebuilt content ---
     $validation = Test-WikiMetadata -Content $rebuiltContent -ExpectedTags $Metadata.Tags
+    # Debug log: show what tags were found vs expected
+    Write-WikiMetadataLog -Message ("DEBUG: Existing tags = [" + ($validation.Existing -join ',') + "], Expected = [" + ($Metadata.Tags -join ',') + "]") -LogPath $LogPath
 
     # Detect dictionary link drift
     $dictLinkChanged = $existingDictLink -ne $DictLink
