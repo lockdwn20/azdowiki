@@ -12,12 +12,12 @@ $dictWritePath = "Tags\Tag_Dictionary.md"
 $logPath = Join-Path $repoRoot "TagUpdate.log"
 
 # Start log
-Out-WikiMetadataLog -Message "=== Tag Update Run: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss') ===" -LogPath $logPath
-Out-WikiMetadataLog -Message "Using Tag Dictionary link: $dictLink" -LogPath $logPath
+Add-WikiMetadataLog -Message "=== Tag Update Run: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss') ===" -LogPath $logPath
+Add-WikiMetadataLog -Message "Using Tag Dictionary link: $dictLink" -LogPath $logPath
 
 # Discover files
 $files = Get-WikiFiles -RepoRoot $repoRoot -ExcludeDirs $excludeDirs
-Out-WikiMetadataLog -Message "Discovered $($files.Count) files" -LogPath $logPath
+Add-WikiMetadataLog -Message "Discovered $($files.Count) files" -LogPath $logPath
 
 $allTags = @()
 
@@ -30,4 +30,4 @@ foreach ($f in $files) {
 }
 
 # Write dictionary
-Export-WikiMetadataDictionary -RepoRoot $repoRoot -DictWritePath $dictWritePath -Tags $allTags -LogPath $logPath
+Save-WikiMetadataDictionary -RepoRoot $repoRoot -DictWritePath $dictWritePath -Tags $allTags -LogPath $logPath
