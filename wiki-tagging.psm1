@@ -92,10 +92,7 @@ function Build-WikiFooter {
         [string]$DictLink
     )
 
-    # Human-readable hashtag line
-    $hashTags = ($Tags | ForEach-Object { "#$_" }) -join ", "
-
-    # Hidden HTML comments for machine parsing
+    $hashTags   = ($Tags | ForEach-Object { "#$_" }) -join ", "
     $tagComments = $Tags | ForEach-Object { "<!-- TAG: $_ -->" }
 
 @"
@@ -104,12 +101,14 @@ function Build-WikiFooter {
 
 $($tagComments -join "`r`n")
 
-<div class="notoc">
+<!-- BEGIN NOTOC -->
 [Tag Dictionary]($DictLink)
-</div>
+<!-- END NOTOC -->
+
 ---
 "@
 }
+
 
 function Write-WikiMetadataLog {
     param(
