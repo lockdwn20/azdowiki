@@ -1,5 +1,5 @@
 # === Master Run ===
-
+Import-Module -Name "$PSScriptRoot\WikiTools.psm1"
 $repoRoot     = "C:\User\GITUSER\GIT\Wiki\Wiki-Root"
 $excludeDirs  = @("Archive","Templates")
 $backupMode   = "<Mode>" #Create, Delete or None mode for backup files
