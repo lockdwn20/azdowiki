@@ -1,0 +1,27 @@
+resources:
+  repositories:
+  - repository: wikiRepo
+    type: git
+    name: yourOrg/yourProject/yourWikiRepo
+    ref: refs/heads/feature/my-branch
+
+steps:
+- checkout: self
+- checkout: wikiRepo
+  persistCredentials: true   # keep auth token for push
+
+- task: PowerShell@2
+  displayName: 'Update markdown headers/footers'
+  inputs:
+    filePath: scripts/Update-Markdown.ps1
+    arguments: "-WikiPath $(Build.SourcesDirectory)/wikiRepo"
+
+# Commit and push changes back
+- script: |
+    cd $(Build.SourcesDirectory)/wikiRepo
+    git config user.email "buildagent@yourorg.com"
+    git config user.name "Build Agent"
+    git add .
+    git commit -m "Automated update of markdown headers/footers [skip ci]" || echo "No changes to commit"
+    git push origin HEAD:feature/my-branch
+  displayName: 'Commit and push changes'
