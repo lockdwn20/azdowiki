@@ -1,27 +1,48 @@
+trigger: none   # run manually for testing
+
+# --- External repos you want to pull in ---
 resources:
   repositories:
-  - repository: wikiRepo
+  - repository: wikiRepo                # alias you choose
     type: git
-    name: yourOrg/yourProject/yourWikiRepo
-    ref: refs/heads/feature/my-branch
+    name: yourOrg/yourProject/yourWikiRepo   # full path: org/project/repo
+    ref: refs/heads/feature/my-branch   # branch you want to target
+
+# --- Pipeline variables (inputs to your script) ---
+variables:
+  repoRoot: '$(Build.SourcesDirectory)/wikiRepo'
+  excludeDirs: 'Archive,Templates'
+  backupMode: 'Create'
+  dictLink: '/Wiki/Wiki-Root/Tags/Tag_Dictionary.md'
+  dictWritePath: 'Tags/Tag_Dictionary.md'
+
+pool:
+  vmImage: 'windows-latest'
 
 steps:
+# --- Checkout repos ---
 - checkout: self
 - checkout: wikiRepo
-  persistCredentials: true   # keep auth token for push
+  persistCredentials: true   # needed if you plan to push changes back
 
+# --- Run your PowerShell script ---
 - task: PowerShell@2
-  displayName: 'Update markdown headers/footers'
+  displayName: 'Update wiki markdown'
   inputs:
     filePath: scripts/Update-Markdown.ps1
-    arguments: "-WikiPath $(Build.SourcesDirectory)/wikiRepo"
+    arguments: >
+      -RepoRoot "$(repoRoot)"
+      -ExcludeDirs "$(excludeDirs)"
+      -BackupMode "$(backupMode)"
+      -DictLink "$(dictLink)"
+      -DictWritePath "$(dictWritePath)"
 
-# Commit and push changes back
+# --- (Optional) Commit and push changes back ---
 - script: |
     cd $(Build.SourcesDirectory)/wikiRepo
     git config user.email "buildagent@yourorg.com"
     git config user.name "Build Agent"
     git add .
-    git commit -m "Automated update of markdown headers/footers [skip ci]" || echo "No changes to commit"
+    git commit -m "Automated wiki update [skip ci]" || echo "No changes to commit"
     git push origin HEAD:feature/my-branch
   displayName: 'Commit and push changes'
