@@ -1,4 +1,4 @@
-# 🧩 Tagging Reference for Analysts
+# Tagging Reference for Analysts
 
 ## 1. YAML Tags
 **Format:**
