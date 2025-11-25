@@ -4,10 +4,13 @@
 **Format:**
 ```yaml
 ---
-title: Incident Response Playbook
-tags: [CSIRT, Workflow, Policy]
-owner: SecurityOps
-priority: High
+title: CSIRT Incident Response Playbook
+description: 
+tags:
+  - CSIRT
+  - Incident 
+  - Response
+  - Playbook
 ---
 ```
 
