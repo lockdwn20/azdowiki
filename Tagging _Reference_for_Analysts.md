@@ -14,9 +14,9 @@ priority: High
 - Visible? Yes, in the page header
 - Purpose: Structured metadata
 - Benefits for Analysts:
-- Instantly searchable on commit
-- Powers navigation menus and dashboards
-- Automation‑ready for pipelines and reports
+    - Instantly searchable on commit
+    - Powers navigation menus and dashboards
+    - Automation‑ready for pipelines and reports
 
 ## 2. Footer #tags
 **Format:**
@@ -27,9 +27,9 @@ priority: High
 - Visible? Yes, at the bottom of the page
 - Purpose: Lightweight categorization
 - Benefits for Analysts:
-- Quick search keywords
-- No overhead, easy to add
-- Human‑friendly cues for page context
+    - Quick search keywords
+    - No overhead, easy to add
+    - Human‑friendly cues for page context
 
 ## 3. HTML Comment Tags
 **Format:**
@@ -41,9 +41,9 @@ priority: High
 - Visible? No, hidden in source
 - Purpose: Invisible enrichment metadata
 - Benefits for Analysts:
-- Still searchable in the repo
-- Can be parsed by automation pipelines
-- Enables Splunk → TheHive enrichment (alerts auto‑link to relevant wiki pages)
+    - Still searchable in the repo
+    - Can be parsed by automation pipelines
+    - Enables Splunk → TheHive enrichment (alerts auto‑link to relevant wiki pages)
 
 ## Analyst Takeaway
 - YAML tags = structured, automation‑ready
