@@ -1,0 +1,160 @@
+{
+  "Quarter": "2025_Q2",
+  "Timestamp": "2025-04-01T08:30:15",
+  "RepoRoot": "Wiki-Root",
+  "FileCount": 158,
+  "DirCount": 32,
+  "Files": [
+    {
+      "RelativePath": "CSIRT\\Incident-Response\\Ransomware-Playbook.md",
+      "FileName": "Ransomware-Playbook.md",
+      "LastModified": "2025-03-15T14:30:22",
+      "Directory": "CSIRT\\Incident-Response"
+    },
+    {
+      "RelativePath": "CSIRT\\Incident-Response\\Data-Breach-Playbook.md",
+      "FileName": "Data-Breach-Playbook.md",
+      "LastModified": "2025-03-15T14:32:45",
+      "Directory": "CSIRT\\Incident-Response"
+    },
+    {
+      "RelativePath": "CSIRT\\Incident-Response\\General-Response.md",
+      "FileName": "General-Response.md",
+      "LastModified": "2025-01-10T09:15:30",
+      "Directory": "CSIRT\\Incident-Response"
+    },
+    {
+      "RelativePath": "CSIRT\\Policies\\Incident-Classification.md",
+      "FileName": "Incident-Classification.md",
+      "LastModified": "2025-03-20T09:15:33",
+      "Directory": "CSIRT\\Policies"
+    },
+    {
+      "RelativePath": "CSIRT\\Runbooks\\Initial-Triage.md",
+      "FileName": "Initial-Triage.md",
+      "LastModified": "2025-03-22T11:20:18",
+      "Directory": "CSIRT\\Runbooks"
+    },
+    {
+      "RelativePath": "CSIRT\\Runbooks\\Containment-Procedures.md",
+      "FileName": "Containment-Procedures.md",
+      "LastModified": "2025-03-22T11:25:42",
+      "Directory": "CSIRT\\Runbooks"
+    },
+    {
+      "RelativePath": "Security\\Threat-Intelligence\\Overview.md",
+      "FileName": "Overview.md",
+      "LastModified": "2024-12-05T10:30:00",
+      "Directory": "Security\\Threat-Intelligence"
+    },
+    {
+      "RelativePath": "Security\\Threat-Intelligence\\APT-Groups.md",
+      "FileName": "APT-Groups.md",
+      "LastModified": "2025-03-10T16:45:12",
+      "Directory": "Security\\Threat-Intelligence"
+    },
+    {
+      "RelativePath": "Security\\Threat-Intelligence\\IOC-Database.md",
+      "FileName": "IOC-Database.md",
+      "LastModified": "2025-03-10T16:50:55",
+      "Directory": "Security\\Threat-Intelligence"
+    },
+    {
+      "RelativePath": "Security\\Vulnerability-Management\\Patch-Priority-Matrix.md",
+      "FileName": "Patch-Priority-Matrix.md",
+      "LastModified": "2025-03-18T10:30:00",
+      "Directory": "Security\\Vulnerability-Management"
+    },
+    {
+      "RelativePath": "Compliance\\GDPR\\Data-Processing-Records.md",
+      "FileName": "Data-Processing-Records.md",
+      "LastModified": "2025-03-25T13:15:44",
+      "Directory": "Compliance\\GDPR"
+    },
+    {
+      "RelativePath": "Compliance\\GDPR\\Breach-Notification-Template.md",
+      "FileName": "Breach-Notification-Template.md",
+      "LastModified": "2025-03-25T13:18:22",
+      "Directory": "Compliance\\GDPR"
+    },
+    {
+      "RelativePath": "Operations\\Monitoring\\Alert-Guide.md",
+      "FileName": "Alert-Guide.md",
+      "LastModified": "2024-11-20T14:00:00",
+      "Directory": "Operations\\Monitoring"
+    },
+    {
+      "RelativePath": "Operations\\Monitoring\\Alert-Response-Guide.md",
+      "FileName": "Alert-Response-Guide.md",
+      "LastModified": "2025-03-28T15:40:11",
+      "Directory": "Operations\\Monitoring"
+    },
+    {
+      "RelativePath": "Operations\\Monitoring\\Dashboard-Configuration.md",
+      "FileName": "Dashboard-Configuration.md",
+      "LastModified": "2025-03-28T15:45:33",
+      "Directory": "Operations\\Monitoring"
+    },
+    {
+      "RelativePath": "Training\\Security-Awareness\\Phishing-Recognition.md",
+      "FileName": "Phishing-Recognition.md",
+      "LastModified": "2025-03-05T09:00:00",
+      "Directory": "Training\\Security-Awareness"
+    },
+    {
+      "RelativePath": "Training\\Security-Awareness\\Password-Best-Practices.md",
+      "FileName": "Password-Best-Practices.md",
+      "LastModified": "2025-03-05T09:05:15",
+      "Directory": "Training\\Security-Awareness"
+    },
+    {
+      "RelativePath": "Training\\Technical\\Splunk-Advanced-Queries.md",
+      "FileName": "Splunk-Advanced-Queries.md",
+      "LastModified": "2025-03-12T14:20:30",
+      "Directory": "Training\\Technical"
+    },
+    {
+      "RelativePath": "Training\\Technical\\SIEM-Correlation-Rules.md",
+      "FileName": "SIEM-Correlation-Rules.md",
+      "LastModified": "2025-03-12T14:25:50",
+      "Directory": "Training\\Technical"
+    },
+    {
+      "RelativePath": "Reference\\Tools\\Incident-Response-Toolkit.md",
+      "FileName": "Incident-Response-Toolkit.md",
+      "LastModified": "2025-03-08T11:10:20",
+      "Directory": "Reference\\Tools"
+    },
+    {
+      "RelativePath": "Reference\\Contact-Lists\\Emergency-Contacts.md",
+      "FileName": "Emergency-Contacts.md",
+      "LastModified": "2025-03-30T16:00:00",
+      "Directory": "Reference\\Contact-Lists"
+    }
+  ],
+  "Directories": [
+    "CSIRT",
+    "CSIRT\\Incident-Response",
+    "CSIRT\\Policies",
+    "CSIRT\\Runbooks",
+    "Compliance",
+    "Compliance\\GDPR",
+    "Compliance\\HIPAA",
+    "Compliance\\SOC2",
+    "Operations",
+    "Operations\\Monitoring",
+    "Operations\\Maintenance",
+    "Reference",
+    "Reference\\Contact-Lists",
+    "Reference\\Tools",
+    "Security",
+    "Security\\Access-Control",
+    "Security\\Network-Security",
+    "Security\\Threat-Intelligence",
+    "Security\\Vulnerability-Management",
+    "Tags",
+    "Training",
+    "Training\\Security-Awareness",
+    "Training\\Technical"
+  ]
+}
