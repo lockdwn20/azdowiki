@@ -671,7 +671,7 @@ function Compare-WikiQuarterlyBaselines {
     $removedDirs = $prevDirs | Where-Object { $_ -notin $currDirs }
 
     # Generate markdown report
-    $report = Generate-QuarterlyChangeReport `
+    $report = New-QuarterlyChangeReport `
         -Quarter $Quarter `
         -PreviousQuarter $previous.Quarter `
         -Added $added `
@@ -692,10 +692,10 @@ function Compare-WikiQuarterlyBaselines {
     return $reportFile
 }
 
-function Generate-QuarterlyChangeReport {
+function New-QuarterlyChangeReport {
     <#
     .SYNOPSIS
-    Generates a markdown-formatted change report.
+    Creates a markdown-formatted change report.
     #>
     param(
         [string]$Quarter,
@@ -951,6 +951,6 @@ Export-ModuleMember -Function @(
     'Get-PreviousQuarterInfo',
     'New-WikiQuarterlyBaseline',
     'Compare-WikiQuarterlyBaselines',
-    'Generate-QuarterlyChangeReport',
+    'New-QuarterlyChangeReport',
     'Invoke-WikiQuarterlyReview'
 )
